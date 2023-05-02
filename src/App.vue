@@ -24,18 +24,18 @@
 
       <!-- todos -->
       <div>
-        <div v-for="todo in todos" :key="todo.id" :class="{ 'bg-blue-200': todo.completed }"
-          class="bg-white rounded-lg p-2 flex justify-between items-center mb-3 shadow-md">
+        <div v-for="todo in todos" :key="todo.id" :class="todo.completed?'bg-blue-200':'bg-white'"
+          class="rounded-lg p-2 flex justify-between items-center mb-3 shadow-md">
           <p :class="{ 'line-through': todo.completed }">
             {{ todo.title }}
           </p>
           <div>
             <button @click="completeToggle(todo.id)"
-              :class="todo.completed ? 'bg-white text-black hover:bg-gray-100' : 'bg-green-600 hover:bg-green-700'"
-              class="py-1 px-2 rounded-l-lg text-white text-xl ">&check;</button>
+              :class="todo.completed ? 'bg-white text-black hover:bg-gray-100' : 'bg-green-600 text-white hover:bg-green-700'"
+              class="py-1 px-2 rounded-l-lg text-xl ">&check;</button>
             <button @click="deleteTodo(todo.id)"
               class="bg-red-600 py-1 px-2 rounded-r-lg text-white text-xl hover:bg-red-700">&cross;</button>
-          </div>
+          </div>   
         </div>
       </div>
     </div>
@@ -45,38 +45,53 @@
 <script setup>
 import Swal from 'sweetalert2';
 import { ref, onMounted } from 'vue';
+import { collection, getDocs, onSnapshot, query, addDoc, deleteDoc, doc,updateDoc,orderBy  } from "firebase/firestore";
+import db from './firebase'
+
 
 const todos = ref([]);
 const todoTitle = ref('');
 
-onMounted(()=>{
-  todos.value = [
-    {id:1, title:'Learn Vue 3', completed: false},
-    {id:2, title:'Learn React', completed: false},
-    {id:3, title:'Learn Angular', completed: false},
-  ]
+onMounted( async ()=>{
+  const q = query(collection(db, "todos"), orderBy("createdDate", "desc"));
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const fbTodos = []
+    querySnapshot.forEach((doc) => {
+      const todo = {
+        id: doc.id,
+        title: doc.data().title,
+        completed: doc.data().completed
+      }
+      console.log(todo);
+      fbTodos.push(todo);
+    });
+    todos.value = fbTodos
+  });
 })
 
 const addTodo = () =>{
-  const newTodo = {
-    id: todos.value.length +1,
+  // Add a new document with a generated id.
+  addDoc(collection(db, "todos"), {
     title: todoTitle.value,
-    completed: false
-  }
-  todos.value.unshift(newTodo)
+    completed: false,
+    createdDate: Date.now()
+  });
   Swal.fire({
   position: 'top-end',
   icon: 'success',
   title: 'Your todo has been added',
   showConfirmButton: false,
   timer: 1500
-})
+  })
   todoTitle.value = ''
 }
 
 const completeToggle = (id) => {
   const index = todos.value.findIndex(x=>x.id===id);
-  todos.value[index].completed = !todos.value[index].completed;
+  const todo = doc(db, "todos", id);
+  updateDoc(todo, {
+    completed: !todos.value[index].completed
+  });
 }
 
 const deleteTodo = (id)=>{
@@ -90,7 +105,7 @@ const deleteTodo = (id)=>{
   confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (result.isConfirmed) {
-      todos.value = todos.value.filter(x=>x.id!==id);
+      deleteDoc(doc(db, "todos", id));
       Swal.fire(
         'Deleted!',
         'Your todo has been deleted.',
