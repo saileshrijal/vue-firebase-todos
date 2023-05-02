@@ -38,6 +38,11 @@
           </div>   
         </div>
       </div>
+      <div>
+        <p class="text-center mt-10 py-4 text-gray-80">
+            &copy; Developed By <a href="saileshrijal.com.np" class="text-blue-600">Sailesh Rijal</a>
+        </p>
+      </div>
     </div>
   </div>
 </template>
