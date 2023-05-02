@@ -8,7 +8,7 @@
       <!-- header -->
       <form @submit.prevent="addTodo">
         <div class="text-center border-blue-600 rounded-lg">
-          <h1 class="uppercase font-bold text-blue-600 text-3xl">Alive Todos</h1>
+          <h1 class="uppercase font-bold text-blue-600 text-3xl">Coders Todo</h1>
           <p class="mt-2">A simple todo app built with Vue 3 and firebase</p>
           <div class="flex justify-center mt-5">
             <input v-model="todoTitle" type="text"
